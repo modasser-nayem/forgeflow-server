@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: forgeflow-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: forgeflow
+      POSTGRES_PASSWORD: forgeflow_dev
+      POSTGRES_DB: forgeflow
+    ports:
+      - '5433:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
