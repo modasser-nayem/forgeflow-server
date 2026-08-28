@@ -35,8 +35,33 @@ model User {
   comments                Comment[]
   notifications           Notification[]
   activities              Activity[]           @relation("ActivityActor")
+  sessions                Session[]
 
   @@map("users")
+}
+
+// ==================== Session Model ============================
+model Session {
+  id String @id @default(uuid())
+
+  userId String
+
+  refreshTokenHash String
+
+  expiresAt DateTime
+  revokedAt DateTime?
+
+  userAgent String?
+  ipAddress String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("sessions")
 }
 
 // ==================== Organization Model ============================
