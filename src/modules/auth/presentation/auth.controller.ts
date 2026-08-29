@@ -2,6 +2,8 @@ import { RefreshTokenUseCase } from './../application/use-cases/refresh-token.us
 import {
   Body,
   Controller,
+  HttpCode,
+  HttpStatus,
   Post,
   Req,
   Res,
@@ -14,11 +16,17 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginUseCase } from '../application/use-cases/login.use-case';
 import { LoginDto } from './dto/login.dto';
 import { LogoutUseCase } from '../application/use-cases/logout.use-case';
-import { LogoutAllDeviceUseCase } from '../application/use-cases/logout-all.use-case';
+import { LogoutAllUseCase } from '../application/use-cases/logout-all.use-case';
 import { AccessTokenGuard } from '../../../common/guards/access-token.guard';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../../../common/types/authenticated-user.type';
 import { Throttle } from '@nestjs/throttler';
+import { ChangePasswordUseCase } from '../application/use-cases/change-password.use-case';
+import { ForgotPasswordUseCase } from '../application/use-cases/forgot-password.use-case';
+import { ResetPasswordUseCase } from '../application/use-cases/reset-password.use-case';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -27,7 +35,10 @@ export class AuthController {
     private readonly loginUseCase: LoginUseCase,
     private readonly refreshTokenUseCase: RefreshTokenUseCase,
     private readonly logoutUseCase: LogoutUseCase,
-    private readonly logoutAllDeviceUseCase: LogoutAllDeviceUseCase,
+    private readonly logoutAllUseCase: LogoutAllUseCase,
+    private readonly changePasswordUseCase: ChangePasswordUseCase,
+    private readonly forgotPasswordUseCase: ForgotPasswordUseCase,
+    private readonly resetPasswordUseCase: ResetPasswordUseCase,
   ) {}
 
   @Post('register')
@@ -141,6 +152,39 @@ export class AuthController {
   @Post('logout-all')
   @UseGuards(AccessTokenGuard)
   async logoutAll(@CurrentUser() user: AuthenticatedUser) {
-    return this.logoutAllDeviceUseCase.execute(user.userId);
+    return this.logoutAllUseCase.execute(user.userId);
+  }
+
+  @Post('forgot-password')
+  @HttpCode(HttpStatus.OK)
+  async forgotPassword(@Body() dto: ForgotPasswordDto) {
+    await this.forgotPasswordUseCase.execute(dto.email);
+
+    return {
+      message: 'If the account exists, a password reset email has been sent.',
+    };
+  }
+
+  @Post('reset-password')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async resetPassword(@Body() dto: ResetPasswordDto): Promise<void> {
+    await this.resetPasswordUseCase.execute(dto.token, dto.password);
+  }
+
+  @Post('change-password')
+  @UseGuards(AccessTokenGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async changePassword(
+    @CurrentUser()
+    user: AuthenticatedUser,
+
+    @Body() dto: ChangePasswordDto,
+  ): Promise<void> {
+    await this.changePasswordUseCase.execute(
+      user.userId,
+      user.sessionId,
+      dto.currentPassword,
+      dto.newPassword,
+    );
   }
 }

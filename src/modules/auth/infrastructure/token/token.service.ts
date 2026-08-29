@@ -5,11 +5,13 @@ import { JwtService } from '@nestjs/jwt';
 export interface AccessTokenPayload {
   sub: string;
   sessionId: string;
+  rotationVersion: number; // for detect rotate token
 }
 
 export interface RefreshTokenPayload {
   sub: string;
   sessionId: string;
+  rotationVersion: number;
   type: 'refresh';
 }
 
@@ -23,10 +25,12 @@ export class TokenService {
   async generateAccessToken(data: {
     userId: string;
     sessionId: string;
+    rotationVersion: number;
   }): Promise<string> {
     const payload: AccessTokenPayload = {
       sub: data.userId,
       sessionId: data.sessionId,
+      rotationVersion: data.rotationVersion,
     };
 
     return this.jwtService.signAsync(payload, {
@@ -41,10 +45,12 @@ export class TokenService {
   async generateRefreshToken(data: {
     userId: string;
     sessionId: string;
+    rotationVersion: number;
   }): Promise<string> {
     const payload: RefreshTokenPayload = {
       sub: data.userId,
       sessionId: data.sessionId,
+      rotationVersion: data.rotationVersion,
       type: 'refresh',
     };
 

@@ -1,21 +1,21 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from 'src/infrastructure/database/prisma/prisma.service';
 import { PasswordService } from '../../infrastructure/password/password.service';
-import { TokenService } from '../../infrastructure/token/token.service';
 import { AuthResult } from '../types/auth-result.types';
 import { LoginDto } from '../../presentation/dto/login.dto';
+import { SessionMetadata, SessionService } from '../services/session.service';
 
 @Injectable()
 export class LoginUseCase {
   constructor(
     private readonly prisma: PrismaService,
     private readonly passwordService: PasswordService,
-    private readonly tokenService: TokenService,
+    private readonly sessionService: SessionService,
   ) {}
 
   async execute(
     dto: LoginDto,
-    metaData: { userAgent?: string; ipAddress?: string },
+    metaData?: SessionMetadata,
   ): Promise<AuthResult> {
     const email = dto.email.trim().toLowerCase();
 
@@ -50,42 +50,11 @@ export class LoginUseCase {
       throw new UnauthorizedException('Account is not available');
     }
 
-    const session = await this.prisma.session.create({
-      data: {
-        userId: user.id,
-        refreshTokenHash: '',
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-        userAgent: metaData?.userAgent,
-        ipAddress: metaData?.ipAddress,
-      },
-    });
-
-    const [accessToken, refreshToken] = await Promise.all([
-      this.tokenService.generateAccessToken({
-        userId: user.id,
-        sessionId: session.id,
-      }),
-      this.tokenService.generateRefreshToken({
-        userId: user.id,
-        sessionId: session.id,
-      }),
-    ]);
-
-    const refreshTokenHash =
-      await this.passwordService.hashSecret(refreshToken);
-
-    await this.prisma.session.update({
-      where: {
-        id: session.id,
-      },
-      data: {
-        refreshTokenHash,
-      },
-    });
+    const session = await this.sessionService.create(user.id, metaData);
 
     return {
-      accessToken,
-      refreshToken,
+      accessToken: session.accessToken,
+      refreshToken: session.refreshToken,
       user: {
         id: user.id,
         email: user.email,

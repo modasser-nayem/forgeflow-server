@@ -57,10 +57,12 @@ export class RegisterUserUseCase {
         this.tokenService.generateAccessToken({
           userId: user.id,
           sessionId: session.id,
+          rotationVersion: session.rotationVersion,
         }),
         this.tokenService.generateRefreshToken({
           userId: user.id,
           sessionId: session.id,
+          rotationVersion: session.rotationVersion,
         }),
       ]);
 

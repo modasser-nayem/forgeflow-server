@@ -1,20 +1,12 @@
 import { Injectable } from '@nestjs/common';
 
-import { PrismaService } from '../../../../infrastructure/database/prisma/prisma.service';
+import { SessionService } from '../services/session.service';
 
 @Injectable()
-export class LogoutAllDeviceUseCase {
-  constructor(private readonly prisma: PrismaService) {}
+export class LogoutAllUseCase {
+  constructor(private readonly sessionService: SessionService) {}
 
   async execute(userId: string): Promise<void> {
-    await this.prisma.session.updateMany({
-      where: {
-        userId,
-        revokedAt: null,
-      },
-      data: {
-        revokedAt: new Date(),
-      },
-    });
+    await this.sessionService.revokeForUser(userId);
   }
 }

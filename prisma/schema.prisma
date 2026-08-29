@@ -24,6 +24,8 @@ model User {
 
   status UserStatus @default(ACTIVE)
 
+  emailVerifiedAt DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -36,8 +38,48 @@ model User {
   notifications           Notification[]
   activities              Activity[]           @relation("ActivityActor")
   sessions                Session[]
+  emailVerificationTokens EmailVerificationToken[]
+  passwordResetTokens     PasswordResetToken[]
 
   @@map("users")
+}
+
+// ==================== Email Verification Token Model ============================
+model EmailVerificationToken {
+  id String @id @default(uuid())
+  userId String
+  selector String @unique
+  tokenHash String
+  expiresAt DateTime
+  usedAt DateTime?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId],references: [id],onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+
+  @@map("email_verification_tokens")
+}
+
+
+model PasswordResetToken {
+  id String @id @default(uuid())
+
+  userId String
+
+  selector String @unique
+  tokenHash String
+
+  expiresAt DateTime
+  usedAt DateTime?
+
+  createdAt DateTime @default(now())
+
+ user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
 }
 
 // ==================== Session Model ============================
@@ -47,6 +89,7 @@ model Session {
   userId String
 
   refreshTokenHash String
+  rotationVersion Int @default(0)
 
   expiresAt DateTime
   revokedAt DateTime?
