@@ -4,7 +4,7 @@ import { PrismaService } from '../../../../infrastructure/database/prisma/prisma
 
 import { PasswordResetService } from '../services/password-reset.service';
 
-import type { EmailProvider } from '../../../notifications/application/interfaces/email-provider.interface';
+import { EmailProvider } from '../../../notifications/application/interfaces/email-provider.interface';
 
 @Injectable()
 export class ForgotPasswordUseCase {

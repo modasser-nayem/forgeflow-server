@@ -1,5 +1,5 @@
-export interface EmailProvider {
-  sendVerificationEmail(email: string, token: string): Promise<void>;
+export abstract class EmailProvider {
+  abstract sendVerificationEmail(email: string, token: string): Promise<void>;
 
-  sendPasswordResetEmail(email: string, token: string): Promise<void>;
+  abstract sendPasswordResetEmail(email: string, token: string): Promise<void>;
 }

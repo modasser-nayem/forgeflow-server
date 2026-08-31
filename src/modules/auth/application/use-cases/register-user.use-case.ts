@@ -4,6 +4,8 @@ import { ConflictException, Injectable } from '@nestjs/common';
 import { TokenService } from '../../infrastructure/token/token.service';
 import { RegisterDto } from '../../presentation/dto/register.dto';
 import { AuthResult } from '../types/auth-result.types';
+import { EmailVerificationService } from '../services/email-verification.service';
+import { EmailProvider } from '../../../notifications/application/interfaces/email-provider.interface';
 
 @Injectable()
 export class RegisterUserUseCase {
@@ -11,6 +13,8 @@ export class RegisterUserUseCase {
     private readonly prisma: PrismaService,
     private readonly passwordService: PasswordService,
     private readonly tokenService: TokenService,
+    private readonly emailVerificationService: EmailVerificationService,
+    private readonly emailProvider: EmailProvider,
   ) {}
 
   async execute(
@@ -25,14 +29,12 @@ export class RegisterUserUseCase {
     });
 
     if (existingUser) {
-      throw new ConflictException(
-        'Unable to create account with the provided information',
-      );
+      throw new ConflictException('Email already registered');
     }
 
     const passwordHash = await this.passwordService.hash(dto.password);
 
-    return this.prisma.$transaction(async (tx) => {
+    const result = await this.prisma.$transaction(async (tx) => {
       const user = await tx.user.create({
         data: {
           email,
@@ -84,5 +86,15 @@ export class RegisterUserUseCase {
         user,
       };
     });
+
+    const verificationToken = await this.emailVerificationService.createToken(
+      result.user.id,
+    );
+    await this.emailProvider.sendVerificationEmail(
+      result.user.email,
+      verificationToken,
+    );
+
+    return result;
   }
 }

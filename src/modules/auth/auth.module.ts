@@ -19,6 +19,11 @@ import { ForgotPasswordUseCase } from './application/use-cases/forgot-password.u
 import { ResetPasswordUseCase } from './application/use-cases/reset-password.use-case';
 import { RandomTokenService } from './infrastructure/token/random-token.service';
 
+import { PasswordResetService } from './application/services/password-reset.service';
+import { EmailVerificationService } from './application/services/email-verification.service';
+import { VerifyEmailUseCase } from './application/use-cases/verify-email.use-case';
+import { EmailProvider } from '../notifications/application/interfaces/email-provider.interface';
+
 @Module({
   imports: [PrismaModule, JwtModule.register({})],
   controllers: [AuthController],
@@ -27,6 +32,8 @@ import { RandomTokenService } from './infrastructure/token/random-token.service'
     RandomTokenService,
     TokenService,
     SessionService,
+    PasswordResetService,
+    EmailVerificationService,
     RegisterUserUseCase,
     LoginUseCase,
     RefreshTokenUseCase,
@@ -35,7 +42,29 @@ import { RandomTokenService } from './infrastructure/token/random-token.service'
     ChangePasswordUseCase,
     ForgotPasswordUseCase,
     ResetPasswordUseCase,
+    VerifyEmailUseCase,
+    {
+      provide: EmailProvider,
+      useValue: {
+        sendVerificationEmail: (email: string, token: string) => {
+          console.log(
+            `[Mock Email] Sending verification to ${email} with token: ${token}`,
+          );
+        },
+        sendPasswordResetEmail: (email: string, token: string) => {
+          console.log(
+            `[Mock Email] Sending password reset to ${email} with token: ${token}`,
+          );
+        },
+      },
+    },
   ],
-  exports: [PasswordService, TokenService, SessionService],
+  exports: [
+    PasswordService,
+    TokenService,
+    SessionService,
+    PasswordResetService,
+    EmailVerificationService,
+  ],
 })
 export class AuthModule {}

@@ -50,8 +50,8 @@ export class ChangePasswordUseCase {
     }
 
     const valid = await this.passwordService.verify(
-      user.passwordHash,
       currentPassword,
+      user.passwordHash,
     );
 
     if (!valid) {

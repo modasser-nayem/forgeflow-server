@@ -27,6 +27,8 @@ import { ResetPasswordUseCase } from '../application/use-cases/reset-password.us
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { VerifyEmailUseCase } from '../application/use-cases/verify-email.use-case';
+import { VerifyEmailDto } from './dto/verify-email.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -39,6 +41,7 @@ export class AuthController {
     private readonly changePasswordUseCase: ChangePasswordUseCase,
     private readonly forgotPasswordUseCase: ForgotPasswordUseCase,
     private readonly resetPasswordUseCase: ResetPasswordUseCase,
+    private readonly verifyEmailUseCase: VerifyEmailUseCase,
   ) {}
 
   @Post('register')
@@ -72,6 +75,7 @@ export class AuthController {
     },
   })
   @Post('login')
+  @HttpCode(HttpStatus.OK)
   async login(
     @Body() dto: LoginDto,
     @Req() req: Request,
@@ -102,6 +106,7 @@ export class AuthController {
     },
   })
   @Post('refresh')
+  @HttpCode(HttpStatus.OK)
   async refresh(
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
@@ -131,6 +136,7 @@ export class AuthController {
 
   @Post('logout')
   @UseGuards(AccessTokenGuard)
+  @HttpCode(HttpStatus.OK)
   async logout(
     @CurrentUser() user: AuthenticatedUser,
     @Res({ passthrough: true }) res: Response,
@@ -151,6 +157,7 @@ export class AuthController {
 
   @Post('logout-all')
   @UseGuards(AccessTokenGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
   async logoutAll(@CurrentUser() user: AuthenticatedUser) {
     return this.logoutAllUseCase.execute(user.userId);
   }
@@ -186,5 +193,11 @@ export class AuthController {
       dto.currentPassword,
       dto.newPassword,
     );
+  }
+
+  @Post('verify-email')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async verifyEmail(@Body() dto: VerifyEmailDto): Promise<void> {
+    await this.verifyEmailUseCase.execute(dto.token);
   }
 }
